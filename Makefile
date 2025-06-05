@@ -1,17 +1,17 @@
 CXX := g++
-CXXFLAGS := -std=c++20 -Wall -Wextra -mwindows -Iinclude
+CXXFLAGS := -std=c++20 -Wall -Wextra -municode -Iinclude
 LDFLAGS := -lole32 -lshell32 -luuid
 
 SRC_DIR := src
 BUILD_DIR := build
 
 SRCS := \
-				$(SRC_DIR)/main.cpp 
+	$(SRC_DIR)/main.cpp 
 
 OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 TARGET := $(BUILD_DIR)/mach.exe
 
-.PHONY clean run stop all
+.PHONY: clean run stop all
 
 all: stop $(TARGET)
 
@@ -32,6 +32,3 @@ run: all
 clean:
 	@powershell -Command "if (Get-Process -Name macro_key_tool -ErrorAction SilentlyContinue) { Stop-Process -Name macro_key_tool -Force }"
 	@if exist build rmdir /S /Q build
-
-
-
