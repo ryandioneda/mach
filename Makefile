@@ -25,11 +25,11 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 stop:
-	@powershell -Command "if (Get-Process -Name macro_key_tool -ErrorAction SilentlyContinue) { Stop-Process -Name macro_key_tool -Force; Write-Host 'Stopped running instance.' }"
+	@powershell -Command "if (Get-Process -Name mach -ErrorAction SilentlyContinue) { Stop-Process -Name mach -Force; Write-Host 'Stopped running instance.' }"
 
 run: all
 	@cmd /C start "" /B "$(TARGET)"
 
 clean:
-	@powershell -Command "if (Get-Process -Name macro_key_tool -ErrorAction SilentlyContinue) { Stop-Process -Name macro_key_tool -Force }"
+	@powershell -Command "if (Get-Process -Name mach -ErrorAction SilentlyContinue) { Stop-Process -Name mach -Force }"
 	@if exist build rmdir /S /Q build
