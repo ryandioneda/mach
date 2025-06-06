@@ -24,6 +24,7 @@ LRESULT CALLBACK KeyboardHook::LowLevelKeyboardProc(int nCode, WPARAM wParam,
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
   }
   KBDLLHOOKSTRUCT *kb{reinterpret_cast<KBDLLHOOKSTRUCT *>(lParam)};
+  OutputDebugStringW(L"[HOOK] LowLevelKeyboardProc");
 
   return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }

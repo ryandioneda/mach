@@ -6,7 +6,8 @@ SRC_DIR := src
 BUILD_DIR := build
 
 SRCS := \
-	$(SRC_DIR)/main.cpp 
+	$(SRC_DIR)/main.cpp \
+	$(SRC_DIR)/hooks/keyboardHook.cpp
 
 OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 TARGET := $(BUILD_DIR)/mach.exe
@@ -27,7 +28,7 @@ stop:
 	@powershell -Command "if (Get-Process -Name macro_key_tool -ErrorAction SilentlyContinue) { Stop-Process -Name macro_key_tool -Force; Write-Host 'Stopped running instance.' }"
 
 run: all
-	@cmd /C start "" $(TARGET)
+	@cmd /C start "" /B "$(TARGET)"
 
 clean:
 	@powershell -Command "if (Get-Process -Name macro_key_tool -ErrorAction SilentlyContinue) { Stop-Process -Name macro_key_tool -Force }"
