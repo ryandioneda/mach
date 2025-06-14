@@ -1,18 +1,20 @@
 use super::wndproc::wndproc;
+use std::ffi::OsStr;
 use std::ffi::c_void;
+use std::os::windows::ffi::OsStrExt;
 
 use windows::{
     Win32::{
         Foundation::*,
         Graphics::Gdi::{CreateSolidBrush, DeleteObject, HBRUSH, UpdateWindow},
-        System::LibraryLoader::GetModuleHandleW,
+        System::{Diagnostics::Debug::OutputDebugStringW, LibraryLoader::GetModuleHandleW},
         UI::WindowsAndMessaging::*,
     },
     core::*,
 };
 
-const WIDTH: i32 = 800;
-const HEIGHT: i32 = 800;
+const WIDTH: i32 = 1280;
+const HEIGHT: i32 = 720;
 const RGB_BLACK: COLORREF = COLORREF(0x00000000);
 
 pub struct Window {
@@ -175,5 +177,13 @@ fn get_module_handle() -> std::result::Result<HINSTANCE, Error> {
     match hmod_res {
         Ok(hmod) => Ok(hmod.into()),
         Err(err) => Err(err),
+    }
+}
+
+fn debug_log(msg: &str) {
+    let wide: Vec<u16> = OsStr::new(msg).encode_wide().chain(Some(0)).collect();
+
+    unsafe {
+        OutputDebugStringW(PWSTR(wide.as_ptr() as _));
     }
 }
