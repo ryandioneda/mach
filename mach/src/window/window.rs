@@ -1,11 +1,11 @@
 use super::wndproc::wndproc;
-use std::{convert, ffi::c_void};
+use std::ffi::c_void;
 
 use windows::{
     Win32::{
         Foundation::*,
-        Graphics::Gdi::UpdateWindow,
-        System::{Diagnostics::Debug::OutputDebugStringW, LibraryLoader::GetModuleHandleW},
+        Graphics::Gdi::{CreateSolidBrush, DeleteObject, HBRUSH, UpdateWindow},
+        System::LibraryLoader::GetModuleHandleW,
         UI::WindowsAndMessaging::*,
     },
     core::*,
@@ -13,20 +13,32 @@ use windows::{
 
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 800;
+const RGB_BLACK: COLORREF = COLORREF(0x00000000);
 
 pub struct Window {
     hwnd: HWND,
+    hbrush: HBRUSH,
+    hinstance: HINSTANCE,
 }
 
 impl Window {
     pub fn new(window_name: &str) -> Result<Self> {
         let hinstance = get_module_handle().expect("Fatal: GetModuleHandleW failed");
-        let wc = Self::build_wndclass(Some(wndproc), hinstance);
+        let hbrush = create_brush(RGB_BLACK);
+        let wc = Self::build_wndclass(Some(wndproc), hinstance, hbrush);
 
         let x = (get_screen_width() - WIDTH) / 2;
         let y = (get_screen_height() - HEIGHT) / 2;
 
-        Self::register_window(&wc).expect("Fatal: RegisterClassW failed");
+        match Self::register_window(&wc) {
+            Ok(atom) => atom,
+            Err(error) => {
+                unsafe {
+                    DeleteObject(hbrush);
+                }
+                return Err(error);
+            }
+        };
 
         let hwnd: HWND = Self::create_window(
             WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
@@ -43,10 +55,18 @@ impl Window {
         )?;
 
         if hwnd.0 == 0 {
+            unsafe {
+                DeleteObject(hbrush);
+                UnregisterClassW(w!("MachWindowClass"), hinstance);
+            }
             return Err(Error::from_win32());
         }
 
-        Ok(Self { hwnd })
+        Ok(Window {
+            hwnd,
+            hbrush,
+            hinstance,
+        })
     }
 
     pub fn show_window(&self) {
@@ -56,7 +76,7 @@ impl Window {
         }
     }
 
-    fn build_wndclass(wndproc: WNDPROC, hinstance: HINSTANCE) -> WNDCLASSW {
+    fn build_wndclass(wndproc: WNDPROC, hinstance: HINSTANCE, hbrush: HBRUSH) -> WNDCLASSW {
         WNDCLASSW {
             style: Default::default(),
             lpfnWndProc: wndproc,
@@ -65,7 +85,7 @@ impl Window {
             hInstance: hinstance,
             hIcon: Default::default(),
             hCursor: Default::default(),
-            hbrBackground: Default::default(),
+            hbrBackground: hbrush,
             lpszMenuName: PCWSTR::null(),
             lpszClassName: w!("MachWindowClass"),
         }
@@ -103,9 +123,6 @@ impl Window {
                 lpparam,
             )
         };
-        unsafe {
-            OutputDebugStringW(w!("Created Window!"));
-        }
 
         if hwnd.0 == 0 {
             return Err(Error::from_win32());
@@ -113,14 +130,29 @@ impl Window {
         Ok(hwnd)
     }
 
-    fn register_window(wndclass: &WNDCLASSW) -> std::result::Result<(), Error> {
+    fn register_window(wndclass: &WNDCLASSW) -> std::result::Result<u16, Error> {
         let register_result = unsafe { RegisterClassW(wndclass) };
         if register_result == 0 {
             Err(Error::from_win32())
         } else {
-            Ok(())
+            Ok(register_result)
         }
     }
+}
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        unsafe {
+            DestroyWindow(self.hwnd);
+            DeleteObject(self.hbrush);
+            UnregisterClassW(w!("MachWindowClass"), self.hinstance);
+        }
+    }
+}
+
+// helper functions
+fn create_brush(color: COLORREF) -> HBRUSH {
+    unsafe { CreateSolidBrush(color) }
 }
 
 fn convert_to_wstring(string: &str) -> Vec<u16> {
