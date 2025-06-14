@@ -24,7 +24,7 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(window_name: &str) -> Result<Self> {
+    pub fn new(window_name: &str) -> windows::core::Result<Self> {
         let hinstance = get_module_handle().expect("Fatal: GetModuleHandleW failed");
         let hbrush = create_brush(RGB_BLACK);
         let wc = Self::build_wndclass(Some(wndproc), hinstance, hbrush);
@@ -132,7 +132,7 @@ impl Window {
         Ok(hwnd)
     }
 
-    fn register_window(wndclass: &WNDCLASSW) -> std::result::Result<u16, Error> {
+    fn register_window(wndclass: &WNDCLASSW) -> windows::core::Result<u16> {
         let register_result = unsafe { RegisterClassW(wndclass) };
         if register_result == 0 {
             Err(Error::from_win32())
@@ -172,7 +172,7 @@ fn get_screen_height() -> i32 {
     if height == 0 { DEFAULT_HEIGHT } else { height }
 }
 
-fn get_module_handle() -> std::result::Result<HINSTANCE, Error> {
+fn get_module_handle() -> windows::core::Result<HINSTANCE> {
     let hmod_res = unsafe { GetModuleHandleW(None) };
     match hmod_res {
         Ok(hmod) => Ok(hmod.into()),
