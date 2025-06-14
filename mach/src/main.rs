@@ -1,10 +1,22 @@
-use windows:: {
+mod window;
+use window::Window;
+
+use windows::{
+    Win32::{System::Diagnostics::Debug::OutputDebugStringW, UI::WindowsAndMessaging::*},
     core::*,
-    Win32::UI::WindowsAndMessaging::*,
 };
 
-fn main() {
+fn main() -> Result<()> {
+    let win = Window::new("Mach Overlay Window")?;
+    win.show_window();
+
     unsafe {
-        MessageBoxW(None, w!("Wide"), w!("Caption"), MB_OK);
+        let mut msg = MSG::default();
+        while GetMessageW(&mut msg, None, 0, 0).into() {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
     }
+
+    Ok(())
 }
